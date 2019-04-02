@@ -1,0 +1,135 @@
+class VideoLiveFeed(tk.Frame):
+
+    def __init__(self, parent,controller):
+
+        tk.Frame.__init__(self, parent)
+        self.controller = controller 
+        self.parent = parent 
+        self._isrunning = True 
+        self.video_source = self.GetVideoSource()
+        self.video = Video(video_source=self.video_source)
+        self.canvas = tk.Canvas(self.controller, width = self.video._width, height = self.video._height)
+        self.canvas.grid(row=0,column=0)
+        self.Update()
+        
+    def __str__(self):
+        return str(self.video_source)
+
+    def Destroy(self):
+        self._isrunning = False
+        self.video.destroy()
+
+    def GetVideoSource(self):
+        return 0
+
+   
+    def Update(self):
+        delay = 100
+
+        if self._isrunning == True:
+            ret, frame = self.video.get_frame()
+
+            if ret:
+                self.photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(frame))
+                self.canvas.create_image(0, 0, image = self.photo, anchor = tk.NW)
+                self.controller.after(delay, self.Update)
+
+
+class KernelSettingsView(tk.Frame):
+    def __init__(self,parent,settings):
+        tk.Frame.__init__(self,parent,settings)
+
+    def InitialiseGrid(self):
+        i = 0
+        LABEL_LIST = ['Morphological Extraction',
+        'Kernal Shape: ',
+        'Kernal Size: ',
+        'X: ',
+        'Y: ',
+        'Morph function: ']
+
+        for lbl in LABEL_LIST:
+            lbl = tk.Label(self, text=lbl)
+            lbl.grid(row=i,column=0)
+            i += 1
+
+        self.KSHAPE_OPTIONS = {'Ellipse':cv2.MORPH_ELLIPSE}
+        self.kshape = tk.StringVar(self)
+        self.kshape.set('Ellipse')
+
+        self.KMORPH_OPTIONS = {'Close':cv2.MORPH_CLOSE, 'Open': cv2.MORPH_OPEN}
+        self.kmorph = tk.StringVar(self)
+        self.kmorph.set('Close')
+
+        self.lbl_morphtitle = tk.Label(self, text="Morphological Extraction")
+        self.lbl_kshape = tk.Label(self, text='Kernal Shape: ')
+        self.lbl_ksize = tk.Label(self, text='Kernal Size: ')
+        self.lbl_ksizex = tk.Label(self,text='X: ')
+        self.lbl_ksizey = tk.Label(self,text='Y: ')
+        self.lbl_kmorph = tk.Label(self, text='Morph function: ')
+
+        self.om_kshape = tk.OptionMenu(self,self.kshape,*self.KSHAPE_OPTIONS)
+        self.scale_ksizex = tk.Scale(self,from_=0,to=30,orient=HORIZONTAL)
+        self.scale_ksizex.set(self.SETTINGS['ksize'][0])
+        self.scale_ksizey = tk.Scale(self,from_=0,to=30,orient=HORIZONTAL)
+        self.scale_ksizey.set(self.SETTINGS['ksize'][1])
+        self.om_kmorph = tk.OptionMenu(self,self.kmorph,*self.KMORPH_OPTIONS)
+
+        self.om_kshape.grid(row=6,column=1)
+        self.scale_ksizex.grid(row=8,column=1)
+        self.scale_ksizey.grid(row=9,column=1)
+        self.om_kmorph.grid(row=10,column=1)
+
+    def ApplyChanges(self):
+        self.SETTINGS['kshape'] = self.KSHAPE_OPTIONS[self.kshape.get()]
+        self.SETTINGS['ksize'] = (self.scale_ksizex.get(),self.scale_ksizey.get())
+        self.SETTINGS['kmorph'] = self.KMORPH_OPTIONS[self.kmorph.get()]
+        self.video_feed.reinitialize()
+
+class BackgroundSubSettingsView(tk.Frame):
+    def __init__(self, parent, settings):
+        tk.Frame.__init__(self,parent, settings)
+
+    def InitialiseGrid(self):
+        
+        i = 0
+
+        LABEL_LIST = ['Background Subtraction Settings',
+        'Algorithm in use: MOG2',
+        'History: ',
+        'Threshold value: ',
+        'Allow shadows?']
+
+
+        self.SHADOWS_OPTIONS = {'True':1, 'False':0}
+        self.shadows = tk.StringVar(self)
+        self.shadows.set(str(self.SETTINGS['shadows']))
+
+        for lbl in LABEL_LIST:
+            lbl = tk.Label(self, text=lbl)
+            lbl.grid(row=i,column=0)
+            i += 1
+
+        self.lbl_title = tk.Label(self, text="Background Subtraction Settings")
+        self.lbl_algorithm = tk.Label(self, text="Algorithm in use: MOG2")
+        self.lbl_history = tk.Label(self, text="History: ")
+        self.lbl_threshold = tk.Label(self, text="Threshold value: ")
+        self.lbl_shadows = tk.Label(self, text="Allow shadows?")
+
+        self.scale_history = tk.Scale(self, from_=0, to=2000, orient=HORIZONTAL)
+        self.scale_history.set(self.SETTINGS['history'])
+        self.scale_threshold = tk.Scale(self, from_=0, to=255, orient=HORIZONTAL)
+        self.scale_threshold.set(self.SETTINGS['threshold'])
+        self.om_shadows = tk.OptionMenu(self,self.shadows,*self.SHADOWS_OPTIONS)
+        
+        self.scale_history.grid(row=2,column=1)
+        self.scale_threshold.grid(row=3,column=1)
+        self.om_shadows.grid(row=4,column=1)
+
+
+    def ApplyChanges(self):
+        self.SETTINGS['history'] = int(self.scale_history.get())
+        self.SETTINGS['threshold'] = int(self.scale_threshold.get())
+        self.SETTINGS['shadows'] = self.SHADOWS_OPTIONS[self.shadows.get()]
+        self.video_feed.reinitialize()
+
