@@ -1,31 +1,15 @@
-import tkinter
+# test for encapsulation in python
 
-from matplotlib.backends.backend_tkagg import (
-    FigureCanvasTkAgg, NavigationToolbar2Tk)
-# Implement the default Matplotlib key bindings.
-from matplotlib.backend_bases import key_press_handler
-from matplotlib.figure import Figure
+class Test():
+    def __init__(self,attr1,attr2):
+        self.attr1 = attr1
+        self.__attr2 = attr2
 
-import numpy as np
-def test():
-    fig = Figure(figsize=(5, 4), dpi=100)
-    t = np.arange(0, 3, .01)
-    fig.add_subplot(111).plot(t, 2 * np.sin(2 * np.pi * t))
+    def get_attr2(self):
+        return self.__attr2
 
-    canvas = FigureCanvasTkAgg(fig, master=random)  # A tk.DrawingArea.
-    canvas.draw()
-    return canvas.get_tk_widget().grid()
+test = Test('public','private')
 
-root = tkinter.Tk()
-root.wm_title("Embedding in Tk")
-
-random = tkinter.Frame(root)
-random.grid(row=0,column=0)
-fig = test()
-
-
-
-
-tkinter.mainloop()
-# If you put root.destroy() here, it will cause an error if the window is
-# closed with the window manager.
+print(test.attr1)
+print(test.get_attr2())
+print(test.__attr2)

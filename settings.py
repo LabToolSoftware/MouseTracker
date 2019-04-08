@@ -3,7 +3,7 @@ import numpy as np
 
 class Settings:
     def __init__(self):
-        self.SETTINGS ={ 'height' : 480,
+        self.__SETTINGS ={ 'height' : 480,
                     'width': 640,
                     'sensitivity': 15,
                     'hsv_min': np.array([50,50,50]),
@@ -20,7 +20,7 @@ class Settings:
     def set(self, changes):
         pass
 
-    def get(self):
-        pass
+    def getSettings(self):
+        return self.__SETTINGS
 
 

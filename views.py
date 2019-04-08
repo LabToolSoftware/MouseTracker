@@ -7,19 +7,17 @@ LARGE_FONT = ("Verdana", 12)
 
 class View(tk.Frame):
     def __init__(self, controller,settings):
-        tk.Frame.__init__(self)
-        self.controller = controller
-        self.SETTINGS = settings
+        tk.Frame.__init__(self,controller)
+        self.__controller = controller
+        self.__SETTINGS = settings.getSettings()
         self.InitialiseGrid()
 
     def InitialiseGrid(self):
         pass
 
-class MainView(tk.Frame):
+class MainView(View):
     def __init__(self, controller,settings):
         tk.Frame.__init__(self,controller)
-        self.controller = controller
-        self.SETTINGS = settings
 
         #Menubar initialisation
         self.InitialiseGrid()
@@ -52,47 +50,43 @@ class MainView(tk.Frame):
         self.controller.config(menu=menubar)
 
     def OpenView(self, view):
-        self.container = self.controller.changeview(view)
+        self.container = self.__controller.changeview(view)
         self.container.grid(row=0,column=0,sticky='NSEW')
 
     def Close(self):
         self.container.grid_forget()
-        self.controller.close()
+        self.__controller.close()
 
-class VideoView(tk.Frame):
+class VideoView(View):
     def __init__(self,controller,settings):
         tk.Frame.__init__(self)
-        self.controller = controller
-        self.SETTINGS = settings.SETTINGS
 
         #Parameters
-        self._isrunning = False 
-        self.frame_pos = 0
-        self.paused = True
-        self.rect=None
-        self.start_x = self.start_y = 0
-        self.end_x = self.end_y = 0
+        self.__isrunning = False 
+        self.__frame_pos = 0
+        self.__paused = True
+        self.__rect=None
+        self.__start_x = self.start_y = 0
+        self.__end_x = self.end_y = 0
         
-        self.detectors = {'None': 'original',
+        self.__detectors = {'None': 'original',
                             'Colour': 'colour',
                             'Colour + Difference': 'colourdiff',
                             'Difference': 'difference',
                             'MOG2': 'background',
                             'Watershed': 'watershed',}
-        self.detector = tk.StringVar()
-        self.detector.set('None')
+        self.__detector = tk.StringVar()
+        self.__detector.set('None')
 
-        self.trackers = {'CSRT': 'csrt'}
-        self.tracker = tk.StringVar()
-        self.tracker.set('CSRT')
+        self.__trackers = {'CSRT': 'csrt'}
+        self.__tracker = tk.StringVar()
+        self.__tracker.set('CSRT')
 
-        self.filters = {'None': 'original',
+        self.__filters = {'None': 'original',
                         'Kalman': 'kalman'}
-        self.filter = tk.StringVar()
-        self.filter.set('None')
+        self.__filter = tk.StringVar()
+        self.__filter.set('None')
 
-        self.InitialiseGrid()
-        print(str(self), ' created...')
         self.UpdateFrame(10)
  
     def InitialiseGrid(self):
@@ -252,11 +246,9 @@ class VideoView(tk.Frame):
         if not isinstance(self.controller.video_source,int):
                 self.slider.set(self.frame_pos)
 
-class AnalysisView(tk.Frame):
+class AnalysisView(View):
     def __init__(self,controller,settings):
         tk.Frame.__init__(self)
-        self.controller = controller
-        self.InitialiseGrid()
 
     def InitialiseGrid(self):
         self.maincontainer = tk.Frame(self)

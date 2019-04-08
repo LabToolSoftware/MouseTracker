@@ -4,17 +4,20 @@ import xml.etree.ElementTree as ET
 class VideoCap(cv2.VideoCapture):
     
     def __init__(self, video_source,settings):
+        
         cv2.VideoCapture.__init__(self,video_source)
-        self.video_source = video_source
-        self.SETTINGS = settings.SETTINGS
+
+        self.__video_source = video_source
+        self.__SETTINGS = settings.getSettings()
+
         if not self.isOpened():
             raise ValueError("Unable to open video source", video_source)
-        self._width = self.get(cv2.CAP_PROP_FRAME_WIDTH) 
-        self._height = self.get(cv2.CAP_PROP_FRAME_HEIGHT) 
-        self._num_frames = self.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.__width = self.get(cv2.CAP_PROP_FRAME_WIDTH) 
+        self.__height = self.get(cv2.CAP_PROP_FRAME_HEIGHT) 
+
         if not isinstance(self.video_source,int):
-            self._fps = self.get(cv2.CAP_PROP_FPS)
-            self._length = self._num_frames/self._fps
+            self.__fps = self.get(cv2.CAP_PROP_FPS)
+            self.__length = self._num_frames/self._fps
         print(str(self), 'created...')
 
     def get_frame(self):
@@ -26,19 +29,28 @@ class VideoCap(cv2.VideoCapture):
     def set_frame(self, framenum):
         self.set(2,framenum)
 
+    def get_fps(self):
+        return (self._VideoCap__fps,self._VideoCap__length)
+
+    def get_length(self):
+        return self._VideoCap__length
+
+    def get_size(self):
+        return (self._VideoCap__width,self._VideoCap__height)
+
 class DataCap:
     def __init__(self, source):
-        self.data_source = source
-        self.boxes,self.track_coords = self.Parse(source)
+        self.__data_source = source
+        self.__boxes,self.__track_coords = self.getData(source)
         print("Opened: " + str(self))
 
     def __str__(self):
         return str(self.data_source)
 
-    def Parse(self, source):
+    def getData(self):
         boxes = {}
         track = []
-        tree = ET.parse(source)
+        tree = ET.parse(__data_source)
         root = tree.getroot()
         for box in tree.iter(tag='box'):
             coords = box.text.split(',')
