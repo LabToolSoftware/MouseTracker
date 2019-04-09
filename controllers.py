@@ -7,13 +7,7 @@ import trackers
 
 class VideoController():
     
-    def __init__(self, videocap, settings):
-
-        self.SETTINGS = settings.SETTINGS
-        self.videocap = videocap
-        self.videowriter = None
-
-        self.detectors = {'original':detectors.Detector(self.SETTINGS),
+    self.__detectors = {'original':detectors.Detector(self.SETTINGS),
                         'colour': detectors.ColourDetector(self.SETTINGS),
                         'colourdiff': detectors.ColourDiffDetector(self.SETTINGS),
                         'difference':detectors.DiffDetector(self.SETTINGS),
@@ -21,24 +15,31 @@ class VideoController():
                         'watershed': detectors.WatershedDetector(self.SETTINGS),
                         }
 
-        self.trackers = {'csrt': trackers.CSRTTracker(self.SETTINGS),
+    self.__trackers = {'csrt': trackers.CSRTTracker(self.SETTINGS),
                         }
 
-        self.detector = self.detectors['original']
+    def __init__(self, videocap, settings):
 
-        self.framenum = 0
+        self.__SETTINGS = settings.getSettings()
+        self.__videocap = videocap
+        self.__videowriter = None
+
+        
+        self.__detector = self.detectors['original']
+
+        self.__framenum = 0
         print(str(self), ' created...')
         self.video_source = videocap.__getattribute__('video_source')
         self._num_frames = videocap.__getattribute__('_num_frames')
         
-        self._isrunning = True
-        self._istracking = False
-        self._isrecording = False
-        self.bboxes = {'stage':[(0,0,self.SETTINGS['width'],self.SETTINGS['height'])],'ROI':[],'Obj':[(0,0,0,0)]}
-        self.track = []
-        self.current_frame = self.GetFrame(0)
+        self.__isrunning = True
+        self.__istracking = False
+        self.__isrecording = False
+        self.__bboxes = {'stage':[(0,0,self.__SETTINGS['width'],self.__SETTINGS['height'])],'ROI':[],'Obj':[(0,0,0,0)]}
+        self.__track = []
+        self.__current_frame = self.GetFrame(0)
 
-    def SetBox(self,boxtype,coords):
+    def setBox(self,boxtype,coords):
 
         if boxtype == 'ROI':
             self.bboxes['ROI'].append(coords)
@@ -46,7 +47,7 @@ class VideoController():
             self.bboxes[boxtype][0] = coords
         print(self.bboxes)
 
-    def SetDetector(self,detector):
+    def setDetector(self,detector):
         self.detector = self.detectors[detector]
 
     def StartTracking(self,tracker):
@@ -80,7 +81,7 @@ class VideoController():
             thickness=2)
         return frame
 
-    def GetNextFrame(self):
+    def getNextFrame(self):
         ret, frame = self.videocap.get_frame()
         fg_frame = None
         if ret:
@@ -101,40 +102,12 @@ class VideoController():
 
             return box_frame,fg_frame
 
-    def GetFrame(self, framenum=0,bboxes=None):
+    def getFrame(self, framenum=0,bboxes=None):
         self.videocap.set_frame(framenum)
         ret, frame = self.videocap.get_frame()
         if ret:
             self.current_frame = frame.copy()
-            return frame
-
-    def Save(self,path):
-        data = ET.Element('data')
-        boxes = ET.SubElement(data, 'boxes')
-        for type_,coords in self.bboxes.items():
-            box = ET.SubElement(boxes,'box')
-            box.set('type',type_)
-            for coord in coords:
-                box.text = str(coord[0]) +','+str(coord[1]) +','+str(coord[2]) +','+str(coord[3])
-        tracker = ET.SubElement(data,'track')
-        for coords in self.track:
-            item = ET.SubElement(tracker, 'coords')
-            item.text = str(coords[0]) +','+str(coords[1])
-        f = open(path,"w+")
-        mydata = ET.tostring(data).decode('utf-8')
-        f.write(mydata)
-        f.close()
-
-    def StartRecording(self, path):
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(path+'.avi',fourcc, 30.0, (self.SETTINGS['width'],self.SETTINGS['height']))
-        self.videowriter = out
-        self._isrecording = True
-        
-    def StopRecord(self):
-        self._isrecording = False
-        self.videowriter.release()
-        self.videowriter = None
+            return frame    
 
 import numpy as np
 import pandas as pd
