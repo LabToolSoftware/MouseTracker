@@ -1,15 +1,23 @@
-# test for encapsulation in python
+class Person:
+    def __init__(self, name):
+        self.__name = name
+        self.getName()
+    
+    def getName(self):
+        print(self.__name)
 
-class Test():
-    def __init__(self,attr1,attr2):
-        self.attr1 = attr1
-        self.__attr2 = attr2
+    
+class Employee(Person):
 
-    def get_attr2(self):
-        return self.__attr2
+    def isEmployee(self):
+        return True
 
-test = Test('public','private')
+class Executive(Employee):
 
-print(test.attr1)
-print(test.get_attr2())
-print(test.__attr2)
+    def isExecutive(self):
+        return True
+
+
+steve = Employee('Steve')
+george = Person('George')
+CEO = Executive('Bob')

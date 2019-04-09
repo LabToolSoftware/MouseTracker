@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 class VideoCap(cv2.VideoCapture):
     
     def __init__(self, video_source,settings):
-        
+
         cv2.VideoCapture.__init__(self,video_source)
 
         self.__video_source = video_source
@@ -15,7 +15,7 @@ class VideoCap(cv2.VideoCapture):
         self.__width = self.get(cv2.CAP_PROP_FRAME_WIDTH) 
         self.__height = self.get(cv2.CAP_PROP_FRAME_HEIGHT) 
 
-        if not isinstance(self.video_source,int):
+        if not isinstance(self.__video_source,int):
             self.__fps = self.get(cv2.CAP_PROP_FPS)
             self.__length = self._num_frames/self._fps
         print(str(self), 'created...')

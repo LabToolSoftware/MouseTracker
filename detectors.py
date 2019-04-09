@@ -12,7 +12,7 @@ class Detector():
     def __init__(self, settings):
         self.sync=True
         self.kernel = None
-        self.SETTINGS = settings
+        self.SETTINGS = settings.getSettings()
 
     def reinitialize(self):
         pass

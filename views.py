@@ -10,17 +10,16 @@ class View(tk.Frame):
         tk.Frame.__init__(self,controller)
         self.__controller = controller
         self.__SETTINGS = settings.getSettings()
+        self.printType()
         self.InitialiseGrid()
 
     def InitialiseGrid(self):
         pass
 
-class MainView(View):
-    def __init__(self, controller,settings):
-        tk.Frame.__init__(self,controller)
+    def printType(self):
+        print(type(self))
 
-        #Menubar initialisation
-        self.InitialiseGrid()
+class MainView(View):
 
     def InitialiseGrid(self):
         self.container = tk.Frame(self)
@@ -47,15 +46,15 @@ class MainView(View):
         menubar.add_cascade(label="Video", menu=filemenu)
         menubar.add_cascade(label="Analysis", menu=analysismenu)
         menubar.add_cascade(label='Settings',menu=settingsmenu)
-        self.controller.config(menu=menubar)
+        self._View__controller.config(menu=menubar)
 
     def OpenView(self, view):
-        self.container = self.__controller.changeview(view)
+        self.container = self._View__controller.set_view(view)
         self.container.grid(row=0,column=0,sticky='NSEW')
 
     def Close(self):
         self.container.grid_forget()
-        self.__controller.close()
+        self._View__controller.close()
 
 class VideoView(View):
     def __init__(self,controller,settings):

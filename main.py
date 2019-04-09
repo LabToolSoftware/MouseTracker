@@ -16,43 +16,47 @@ class Application(tk.Tk):
 
     def __init__(self,*args,**kwargs):
         tk.Tk.__init__(self,*args,**kwargs)
-        self.wm_title =  args[0]
-        self.settings = settings.Settings()
-        self.homeview = views.MainView(self,self.settings)
-        self.homeview.grid()
-        self.videocap = None
-        self.videoview = None
-        self.videocontroller = None
+        self.__wm_title =  args[0]
+        self.__settings = settings.Settings()
+        self.__homeview = views.MainView(self,self.__settings)
+        self.__homeview.grid()
+        self.__videocap = None
+        self.__videoview = None
+        self.__videocontroller = None
 
-        self.video_open = False
+        self.__video_open = False
 
-        self.data = None
-        self.datacontroller = None
-        self.analysisview = None
-        self.analysis_open = False
+        self.__data = None
+        self.__datacontroller = None
+        self.__analysisview = None
+        self.__analysis_open = False
 
-        self.views = {'video':self.openvideocapture,
-                'webcam':self.openvideocapture,
-                'analysis':self.openanalysis,
+        self.__views = {'video':self.__openvideofile,
+                'webcam':self.__openwebcamcapture,
+                'analysis':self.__openanalysis
                 }
 
-    def changeview(self, view):
-        if view in ['video','analysis']:
-            return self.views[view](filedialog.askopenfilename())
-        elif view == 'webcam':
-            return self.views[view](0)
+    def set_view(self, view):
+        if view in self.__views.keys():
+            return self.__views[view]()
 
-    def openvideocapture(self, source):
-        if self.video_open:
+    def __openwebcamcapture(self):
+        return self.__openvideocapture(0)
+
+    def __openvideofile(self):
+        return self.__openvideocapture(filedialog.askopenfilename())
+
+    def __openvideocapture(self, source):
+        if self.__video_open:
             self.close()
-        videocap = models.VideoCap(source,self.settings)
-        self.videocap = videocap
-        self.videocontroller = controllers.VideoController(self.videocap,self.settings)
-        self.videoview = views.VideoView(self.videocontroller,self.settings)
-        self.video_open = True
-        return self.videoview
+        videocap = models.VideoCap(source,self.__settings)
+        self.__videocap = videocap
+        self.__videocontroller = controllers.VideoController(self.__videocap,self.__settings)
+        self.__videoview = views.VideoView(self.__videocontroller,self.__settings)
+        self.__video_open = True
+        return self.__videoview
 
-    def openanalysis(self,source):
+    def __openanalysis(self):
         if self.video_open:
             self.close()
         self.data = models.DataCap(source)
