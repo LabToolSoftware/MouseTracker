@@ -1,3 +1,27 @@
+import xml.etree.ElementTree as ET
+
+class DataCap:
+    def __init__(self, source):
+        self.__data_source = source
+        self.__boxes,self.__track_coords = self.getData(source)
+        print("Opened: " + str(self))
+
+    def __str__(self):
+        return str(self.data_source)
+
+    def getData(self):
+        boxes = {}
+        track = []
+        tree = ET.parse(__data_source)
+        root = tree.getroot()
+        for box in tree.iter(tag='box'):
+            coords = box.text.split(',')
+            boxes[str(box.get('type'))] = (int(coords[0]),int(coords[1]),int(coords[2]),int(coords[3]))
+        for coords in tree.iter(tag='coords'):
+            x,y = coords.text.split(',')
+            track.append((int(x),int(y)))
+        return box,track
+
 class DataWriter:
     def __init__(self):
         pass

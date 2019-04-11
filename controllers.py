@@ -5,6 +5,21 @@ import cv2
 import detectors
 import trackers
 
+class ViewController():
+
+    def __init__(self, views):
+        self.__views = views
+        self.__current_view 
+
+    def setView(self, view):
+        if view in self.__views:
+            self.__current_view = view
+        else:
+            print(view + 'not found')
+
+    def getView(self):
+        return self.__current_view
+
 class VideoController():
     
     self.__detectors = {'original':detectors.Detector(self.SETTINGS),
@@ -18,16 +33,16 @@ class VideoController():
     self.__trackers = {'csrt': trackers.CSRTTracker(self.SETTINGS),
                         }
 
-    def __init__(self, videocap, settings):
+    def __init__(self, stream, settings):
 
         self.__SETTINGS = settings.getSettings()
-        self.__videocap = videocap
+        self.__videocap = stream
         self.__videowriter = None
 
         
         self.__detector = self.detectors['original']
 
-        self.__framenum = 0
+        self.__framenum = stream.getFrame()
         print(str(self), ' created...')
         self.video_source = videocap.__getattribute__('video_source')
         self._num_frames = videocap.__getattribute__('_num_frames')
