@@ -23,11 +23,11 @@ class Stream():
 
     def __next__(self):
         ret, frame = self._Stream__video_source.read()
-        resized_frame = cv2.resize(frame.copy() , (self._Stream__width,self._Stream__height))
+        resized_frame = cv2.resize(frame.copy() , (self.__settings['width'],self.__settings['height']))
         resized_frame = cv2.cvtColor(resized_frame,cv2.COLOR_BGR2RGB)
         return ret, resized_frame
 
-class IsScannable(Stream,abc.ABCMeta):
+class Scannable(Stream,abc.ABCMeta):
     @abc.abstractmethod    
     def setFrame(self, framenum):
         pass
@@ -36,7 +36,7 @@ class IsScannable(Stream,abc.ABCMeta):
     def getLength(self):
         pass  
 
-class VideoStream(IsScannable): 
+class VideoStream(Scannable): 
    
     def setFrame(self, framenum):
         self.__video_source.set(2,framenum)
@@ -47,13 +47,16 @@ class VideoStream(IsScannable):
     def getLength(self):
         return self._Stream__fps  * self._Stream__video_source.get(cv2.CAP_PROP_)  
 
+class WebcamStream(Stream):
+    pass
+
 class VideoRecorder:
-    def __init__(self):
-        pass
+    def __init__(self,settings):
+        self.__settings = settings.getSettings()
 
     def StartRecording(self, path):
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(path+'.avi',fourcc, 30.0, (self.SETTINGS['width'],self.SETTINGS['height']))
+        out = cv2.VideoWriter(path+'.avi',fourcc, 30.0, (self.__settings['width'],self.__settings['height']))
         self.videowriter = out
         self._isrecording = True
     

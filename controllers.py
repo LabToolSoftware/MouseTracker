@@ -1,9 +1,18 @@
+#packages required for video tracking
 import tkinter as tk
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ET
 import cv2
 import detectors
 import trackers
+
+#packages required for data analysis
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('TKAgg')
+import matplotlib.backends.backend_tkagg as tkagg
+import seaborn as sns
 
 class ViewController():
 
@@ -22,45 +31,70 @@ class ViewController():
 
 class VideoController():
     
-    self.__detectors = {'original':detectors.Detector(self.SETTINGS),
-                        'colour': detectors.ColourDetector(self.SETTINGS),
-                        'colourdiff': detectors.ColourDiffDetector(self.SETTINGS),
-                        'difference':detectors.DiffDetector(self.SETTINGS),
-                        'background':detectors.BackgroundSubDetector(self.SETTINGS),
-                        'watershed': detectors.WatershedDetector(self.SETTINGS),
-                        }
-
-    self.__trackers = {'csrt': trackers.CSRTTracker(self.SETTINGS),
-                        }
-
     def __init__(self, stream, settings):
 
-        self.__SETTINGS = settings.getSettings()
+        self.__settings = settings.getSettings()
         self.__videocap = stream
-        self.__videowriter = None
+        self.__videowriter = writer
 
+        self.__detectors = {'original':detectors.Detector(self.__settings),
+                            'colour': detectors.ColourDetector(self.__settings),
+                            'colourdiff': detectors.ColourDiffDetector(self.__settings),
+                            'difference':detectors.DiffDetector(self.__settings),
+                            'background':detectors.BackgroundSubDetector(self.__settings),
+                            'watershed': detectors.WatershedDetector(self.__settings),
+                            }
+
+        self.__trackers = {'csrt': trackers.CSRTTracker(self.__settings),
+                            }
         
         self.__detector = self.detectors['original']
 
-        self.__framenum = stream.getFrame()
-        print(str(self), ' created...')
-        self.video_source = videocap.__getattribute__('video_source')
-        self._num_frames = videocap.__getattribute__('_num_frames')
-        
         self.__isrunning = True
         self.__istracking = False
         self.__isrecording = False
-        self.__bboxes = {'stage':[(0,0,self.__SETTINGS['width'],self.__SETTINGS['height'])],'ROI':[],'Obj':[(0,0,0,0)]}
-        self.__track = []
-        self.__current_frame = self.GetFrame(0)
+        
+    def __openwebcamcapture(self):
+        return self.__openvideocapture(0)
 
-    def setBox(self,boxtype,coords):
+    def __openvideofile(self):
+        return self.__openvideocapture(filedialog.askopenfilename())
 
-        if boxtype == 'ROI':
-            self.bboxes['ROI'].append(coords)
-        else:
-            self.bboxes[boxtype][0] = coords
-        print(self.bboxes)
+    def __openvideocapture(self, source):
+        if self.__video_open:
+            self.close()
+        videocap = video.Stream(source,self.__settings)
+        self.__videocap = videocap
+        self.__videocontroller = controllers.VideoController(self.__videocap,self.__settings)
+        self.__videoview = views.VideoView(self.__videocontroller,self.__settings)
+        self.__video_open = True
+        return self.__videoview
+
+    def getNextFrame(self):
+        ret, frame = self.__videocap.getFrame()
+        fg_frame = None
+
+        if ret:
+            fg_frame = self.detector.detect_frame(frame)
+            if self._istracking:
+                coords = self.tracker.Update(fg_frame)
+                self.track.append(coords)
+                print('Object coordinates: ' + str(self.track[-1]))    
+                box_frame = self.DrawBoxes(frame)
+            else:
+                box_frame = frame
+
+            if self._isrecording:
+                self.videowriter.write(cv2.cvtColor(box_frame,cv2.COLOR_BGR2RGB))
+
+            return box_frame,fg_frame
+
+    def getFrame(self, framenum=0,bboxes=None):
+        self.__videocap.setFrame(framenum)
+        ret, frame = self.__videocap.get_frame()
+        if ret:
+            self.current_frame = frame.copy()
+            return frame    
 
     def setDetector(self,detector):
         self.detector = self.detectors[detector]
@@ -96,40 +130,18 @@ class VideoController():
             thickness=2)
         return frame
 
-    def getNextFrame(self):
-        ret, frame = self.videocap.get_frame()
-        fg_frame = None
-        if ret:
-            
-            self.current_frame = frame.copy()
-            fg_frame = self.detector.detect_frame(frame)
+class SelectionController(object):
+    def __init__(self):
+        self.__bboxes = {'stage':[(0,0,self.__settings['width'],self.__settings['height'])],'ROI':[],'Obj':[(0,0,0,0)]}
+        self.__current_frame = self.GetFrame(0)
 
-            if self._istracking:
-                coords = self.tracker.Update(fg_frame)
-                self.track.append(coords)
-                print('Object coordinates: ' + str(self.track[-1]))    
-                box_frame = self.DrawBoxes(frame)
-            else:
-                box_frame = frame
+    def setBox(self,boxtype,coords):
 
-            if self._isrecording:
-                self.videowriter.write(cv2.cvtColor(box_frame,cv2.COLOR_BGR2RGB))
-
-            return box_frame,fg_frame
-
-    def getFrame(self, framenum=0,bboxes=None):
-        self.videocap.set_frame(framenum)
-        ret, frame = self.videocap.get_frame()
-        if ret:
-            self.current_frame = frame.copy()
-            return frame    
-
-import numpy as np
-import pandas as pd
-import matplotlib
-matplotlib.use('TKAgg')
-import matplotlib.backends.backend_tkagg as tkagg
-import seaborn as sns
+        if boxtype == 'ROI':
+            self.bboxes['ROI'].append(coords)
+        else:
+            self.bboxes[boxtype][0] = coords
+        print(self.bboxes)
 
 class AnalysisController:
     def __init__(self, source,settings):
@@ -137,6 +149,15 @@ class AnalysisController:
         self.SETTINGS = settings.SETTINGS
         self.data_source = source  
         self.trace = pd.DataFrame(np.asarray(tuple(self.data_source.track_coords)),columns=["x", "y"]) 
+
+    def __openanalysis(self):
+            if self.video_open:
+                self.close()
+            self.data = models.DataCap(source)
+            self.datacontroller = controllers.AnalysisController(self.data,self.settings)
+            self.analysisview = views.AnalysisView(self.datacontroller,self.settings)
+            self.analysis_open = True
+            return self.analysisview
 
     def GetPlot(self, type_='original',master=None):
         Fig = matplotlib.figure.Figure(figsize=(5,4),dpi=100)

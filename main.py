@@ -40,31 +40,6 @@ class Application(tk.Tk):
     def set_view(self, view):
         if view in self.__views.keys():
             return self.__views[view]()
-
-    def __openwebcamcapture(self):
-        return self.__openvideocapture(0)
-
-    def __openvideofile(self):
-        return self.__openvideocapture(filedialog.askopenfilename())
-
-    def __openvideocapture(self, source):
-        if self.__video_open:
-            self.close()
-        videocap = models.VideoCap(source,self.__settings)
-        self.__videocap = videocap
-        self.__videocontroller = controllers.VideoController(self.__videocap,self.__settings)
-        self.__videoview = views.VideoView(self.__videocontroller,self.__settings)
-        self.__video_open = True
-        return self.__videoview
-
-    def __openanalysis(self):
-        if self.video_open:
-            self.close()
-        self.data = models.DataCap(source)
-        self.datacontroller = controllers.AnalysisController(self.data,self.settings)
-        self.analysisview = views.AnalysisView(self.datacontroller,self.settings)
-        self.analysis_open = True
-        return self.analysisview
     
     def close(self):
         self.videocontroller = None

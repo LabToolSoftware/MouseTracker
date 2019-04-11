@@ -16,9 +16,6 @@ class View(tk.Frame):
     def InitialiseGrid(self):
         pass
 
-    def printType(self):
-        print(type(self))
-
 class MainView(View):
 
     def InitialiseGrid(self):
@@ -42,7 +39,6 @@ class MainView(View):
         analysismenu.add_command(label='Open data', command=lambda:self.OpenView('analysis'))
         analysismenu.add_command(label='Close data', command=None)
 
-
         menubar.add_cascade(label="Video", menu=filemenu)
         menubar.add_cascade(label="Analysis", menu=analysismenu)
         menubar.add_cascade(label='Settings',menu=settingsmenu)
@@ -56,14 +52,11 @@ class MainView(View):
         self.container.grid_forget()
         self._View__controller.close()
 
-class VideoView(View):
-    def __init__(self,controller,settings):
-        tk.Frame.__init__(self)
+class SelectionView(View):
 
-        #Parameters
-        self.__isrunning = False 
-        self.__frame_pos = 0
-        self.__paused = True
+    def __init__(self, controller, settings):
+        View.__init__(controller,settings)
+
         self.__rect=None
         self.__start_x = self.start_y = 0
         self.__end_x = self.end_y = 0
@@ -85,6 +78,66 @@ class VideoView(View):
                         'Kalman': 'kalman'}
         self.__filter = tk.StringVar()
         self.__filter.set('None')
+
+    def InitialiseGrid(self):
+        self.lbl_background = tk.Label(self.sidebar, text="Background Subtraction: ")
+        self.lbl_tracker = tk.Label(self.sidebar, text="Tracker: ")
+        self.lbl_filter = tk.Label(self.sidebar, text="Filter: ")
+        self.lbl_background.grid(row=0,column=0)
+        self.lbl_tracker.grid(row=1,column=0)
+        self.lbl_filter.grid(row=2,column=0)
+        self.combo_detector = tk.OptionMenu(self.sidebar,self.detector,*self.detectors,command=lambda event: self.SetDetector(event=event))
+        self.combo_tracker = tk.OptionMenu(self.sidebar,self.tracker,*self.trackers)
+        self.combo_filter = tk.OptionMenu(self.sidebar,self.filter,*self.filters)
+        self.combo_detector.grid(row=0,column=1)
+        self.combo_tracker.grid(row=1,column=1)
+        self.combo_filter.grid(row=2,column=1)
+
+    def BoxStart(self, event):
+        self.start_x = event.x
+        self.start_y = event.y
+        if not self.rect:
+            self.rect = self.canvas_orig.create_rectangle(0,0,1,1,outline="black")
+
+    def BoxExpand(self, event):
+        self.end_x = event.x
+        self.end_y  = event.y
+        self.canvas_orig.coords(self.rect, self.start_x, self.start_y, self.end_x, self.end_y)
+
+    def BoxStop(self, event, boxtype):
+        self.canvas_orig.unbind("<ButtonPress-1>")
+        self.canvas_orig.unbind("<B1-Motion>")
+        self.canvas_orig.unbind("<ButtonRelease-1>")
+        self.canvas_orig.delete(self.rect)
+        self.rect = None
+        self.controller.SetBox(boxtype,(self.start_x,self.start_y,self.end_x,self.end_y))
+
+    def MakeBox(self,boxtype):
+        self.canvas_orig.bind("<ButtonPress-1>",lambda x : self.BoxStart(x))
+        self.canvas_orig.bind("<B1-Motion>",lambda x : self.BoxExpand(x))
+        self.canvas_orig.bind("<ButtonRelease-1>",lambda x : self.BoxStop(x,boxtype))
+
+    def SetBox(self,boxtype):
+        self.Pause()
+        self.MakeBox(boxtype)
+
+    def SetDetector(self,event):
+        self.Pause()
+        detector = self.detectors[self.detector.get()]
+        self.controller.SetDetector(detector)
+
+    def StartTracking(self):
+        tracker = self.__trackers[self.__tracker.get()]
+        self.controller.StartTracking(tracker)
+
+class VideoView(View):
+    def __init__(self,controller,settings):
+        View.__init__(self,controller,settings)
+
+        #Parameters
+        self.__isrunning = False 
+        self.__frame_pos = 0
+        self.__paused = True
 
         self.UpdateFrame(10)
  
@@ -118,21 +171,6 @@ class VideoView(View):
         self.btn_save.grid(row=7,column=0,columnspan=2,sticky="EW")
         self.btn_record.grid(row=1,column=3,sticky="EW")
 
-        self.lbl_background = tk.Label(self.sidebar, text="Background Subtraction: ")
-        self.lbl_tracker = tk.Label(self.sidebar, text="Tracker: ")
-        self.lbl_filter = tk.Label(self.sidebar, text="Filter: ")
-        self.lbl_background.grid(row=0,column=0)
-        self.lbl_tracker.grid(row=1,column=0)
-        self.lbl_filter.grid(row=2,column=0)
-        self.combo_detector = tk.OptionMenu(self.sidebar,self.detector,*self.detectors,command=lambda event: self.SetDetector(event=event))
-        self.combo_tracker = tk.OptionMenu(self.sidebar,self.tracker,*self.trackers)
-        self.combo_filter = tk.OptionMenu(self.sidebar,self.filter,*self.filters)
-        self.combo_detector.grid(row=0,column=1)
-        self.combo_tracker.grid(row=1,column=1)
-        self.combo_filter.grid(row=2,column=1)
-
-
-        
         if not isinstance(self.controller.video_source,int):
             self.stop_btn = tk.Button(self.controlpanel,text="Stop", command=lambda : self.Stop())
             self.pause_btn = tk.Button(self.controlpanel,text="Pause", command=lambda : self.Pause())
@@ -156,34 +194,6 @@ class VideoView(View):
             self.resume_btn.grid(row=1,column=2,sticky="EW")
             self._isrunning = True       
 
-    def BoxStart(self, event):
-        self.start_x = event.x
-        self.start_y = event.y
-        if not self.rect:
-            self.rect = self.canvas_orig.create_rectangle(0,0,1,1,outline="black")
-
-    def BoxExpand(self, event):
-        self.end_x = event.x
-        self.end_y  = event.y
-        self.canvas_orig.coords(self.rect, self.start_x, self.start_y, self.end_x, self.end_y)
-
-    def BoxStop(self, event, boxtype):
-        self.canvas_orig.unbind("<ButtonPress-1>")
-        self.canvas_orig.unbind("<B1-Motion>")
-        self.canvas_orig.unbind("<ButtonRelease-1>")
-        self.canvas_orig.delete(self.rect)
-        self.rect = None
-        self.controller.SetBox(boxtype,(self.start_x,self.start_y,self.end_x,self.end_y))
-
-    def MakeBox(self,boxtype):
-        self.canvas_orig.bind("<ButtonPress-1>",lambda x : self.BoxStart(x))
-        self.canvas_orig.bind("<B1-Motion>",lambda x : self.BoxExpand(x))
-        self.canvas_orig.bind("<ButtonRelease-1>",lambda x : self.BoxStop(x,boxtype))
-
-    def SetBox(self,boxtype):
-        self.Pause()
-        self.MakeBox(boxtype)
-
     def Resume(self):
         self.paused=False
         self.Update()
@@ -199,15 +209,6 @@ class VideoView(View):
         self.paused = True
         self.frame_pos = 0
         self.UpdateFrame(0)
-
-    def SetDetector(self,event):
-        self.Pause()
-        detector = self.detectors[self.detector.get()]
-        self.controller.SetDetector(detector)
-
-    def StartTracking(self):
-        tracker = self.trackers[self.tracker.get()]
-        self.controller.StartTracking(tracker)
 
     def StartRecording(self):
         self.Pause()
@@ -246,9 +247,6 @@ class VideoView(View):
                 self.slider.set(self.frame_pos)
 
 class AnalysisView(View):
-    def __init__(self,controller,settings):
-        tk.Frame.__init__(self)
-
     def InitialiseGrid(self):
         self.maincontainer = tk.Frame(self)
         self.main = tk.Canvas(self.maincontainer)
@@ -270,3 +268,4 @@ class AnalysisView(View):
         heatmap_photo = PIL.ImageTk.PhotoImage(image = PIL.Image.fromarray(heatmap))
         self.main.image = heatmap_photo
         self.main.create_image(0, 0, image = heatmap_photo, anchor = tk.NW)
+

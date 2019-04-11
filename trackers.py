@@ -8,28 +8,28 @@ from skimage.morphology import watershed
 class Tracker:
     def __init__(self,settings):
         self.SETTINGS = settings
+        self.__obj_coords = []
 
-    def Initialise(self,start_frame,obj_box):
-        pass
+    def StartTracking(self,frame, object_box):
+        self.__tracker = cv2.TrackerCSRT_create()
+        self.__tracker.init(frame,object_box)
 
-    def Update(self,frame):
+    def getTracking(self):
+        return self.__obj_coords
+
+    def Track(self,frame):
         return frame
 
 class CSRTTracker(Tracker):
-    def __init__(self, settings):
-        Tracker.__init__(self, settings)
-        self.tracker = None
 
-    def Initialise(self,start_frame=None,obj_box=None):
-        self.tracker = cv2.TrackerCSRT_create()
-        self.tracker.init(start_frame,obj_box)
-
-    def Update(self,frame):
-        ret, obj_box = self.tracker.update(frame)
+    def Track(self,frame):
+        ret, obj_box = self.__tracker.update(frame)
         if ret:
             obj_pos = (int(obj_box[0]) + int(obj_box[2]/2),
                         int(obj_box[1]) + int(obj_box[3]/2))
-        return obj_pos
+        self.__obj_coords.append(obj_pos)
+
+
 
 
 
